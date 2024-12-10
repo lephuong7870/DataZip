@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-userconfigmap
+data:
+  storage.xml: |
+    <clickhouse>
+        <listen_host>0.0.0.0</listen_host>
+        <path>/data/clickhouse/</path>
+        <user_directories>
+            <local_directory>
+                <path>/data/</path>
+            </local_directory>
+        </user_directories>
+    </clickhouse>
+
+  access_management.xml: | 
+    <clickhouse>
+      <users>
+        <default>
+          <access_management>1</access_management>
+          <named_collection_control>1</named_collection_control>
+          <show_named_collections>1</show_named_collections>
+          <show_named_collections_secrets>1</show_named_collections_secrets>
+          <double_sha1_passwords>1</double_sha1_passwords>
+        </default>
+      </users>
+    </clickhouse>
+
+  users.xml: |
+    <?xml version="1.0"?>
+    <clickhouse>
+        <profiles>
+            <!-- Default profile with memory and load balancing configurations -->
+            <default>
+                <max_memory_usage>10000000</max_memory_usage>  <!-- Set max memory usage to 10 GB -->
+                <load_balancing>random</load_balancing>
+            </default>
+            <!-- Readonly profile with readonly flag set -->
+            <readonly>
+                <readonly>1</readonly>
+            </readonly>
+        </profiles>
+
+        <users> 
+          <!-- Default user configuration -->
+          <default>
+            <password_double_sha1_hex>7dc366355ed7a983876a29d69a9586d5c2bd98b4</password_double_sha1_hex>
+            <networks>
+              <ip>::/0</ip>  <!-- Allow connections from any IP address -->
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+          </default>
+        </users>
+
+        <quotas>
+            <default>
+                <interval>
+                    <duration>3600</duration>  <!-- 1 hour interval -->
+                    <queries>1000</queries>  <!-- Allow 1000 queries per interval -->
+                    <errors>20</errors>  <!-- Allow 10 errors per interval -->
+                    <result_rows>10000000</result_rows>  <!-- Limit to 10 million result rows -->
+                    <read_rows>100000000</read_rows>  <!-- Limit to 100 million read rows -->
+                    <execution_time>3600</execution_time>  <!-- Max execution time of 3600 seconds (1 hour) -->
+                </interval>
+            </default>
+        </quotas>
+    </clickhouse>

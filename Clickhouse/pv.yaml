@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: clickhouse-pv
+spec:
+  capacity:
+    storage: 6Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual  # Custom StorageClass, you can use any name
+  hostPath:
+    path: /mnt/data/clickhouse  # Minikube directory, ensure it exists
+    type: DirectoryOrCreate  # Create directory if it doesn't exist
