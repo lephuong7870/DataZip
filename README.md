@@ -1,5 +1,14 @@
 # Steps For Setting the SuperSet and Clichouse in Minikube
 
+# Perquisites
+
+```txt
+1) Any Cloud Account
+2) Terraform
+3) Helm
+4) Superset
+5) Clickhouse
+```
 
 # Install Kubernetes Using Script
 
@@ -150,7 +159,59 @@ unzip Datazip  # For installing Unzip sudo apt install unzip
 cd Datazip/Terraform
 ```
 
-### `2.Deploy the SuperSet & ClickHouse using Terraform Script`
+### `2. Geneate the Password for ClickHouse using Double hax`
+
+```sh
+PASSWORD=$(base64 < /dev/urandom | head -c8); echo "$PASSWORD"; echo -n "$PASSWORD" | sha1sum | tr -d '-' | xxd -r -p | sha1sum | tr -d '-'
+```
+
+```txt
+replace the Output in the configmap.yaml in the below file <password_double_sha1_hex>Replace</password_double_sha1_hex>
+
+users.xml: |
+    <?xml version="1.0"?>
+    <clickhouse>
+        <profiles>
+            <!-- Default profile with memory and load balancing configurations -->
+            <default>
+                <max_memory_usage>10000000</max_memory_usage>  <!-- Set max memory usage to 10 GB -->
+                <load_balancing>random</load_balancing>
+            </default>
+            <!-- Readonly profile with readonly flag set -->
+            <readonly>
+                <readonly>1</readonly>
+            </readonly>
+        </profiles>
+
+        <users> 
+          <!-- Default user configuration -->
+          <default>
+            <password_double_sha1_hex>7dc366355ed7a983876a29d69a9586d5c2bd98b4</password_double_sha1_hex>
+            <networks>
+              <ip>::/0</ip>  <!-- Allow connections from any IP address -->
+            </networks>
+            <profile>default</profile>
+            <quota>default</quota>
+          </default>
+        </users>
+
+        <quotas>
+            <default>
+                <interval>
+                    <duration>3600</duration>  <!-- 1 hour interval -->
+                    <queries>1000</queries>  <!-- Allow 1000 queries per interval -->
+                    <errors>20</errors>  <!-- Allow 10 errors per interval -->
+                    <result_rows>10000000</result_rows>  <!-- Limit to 10 million result rows -->
+                    <read_rows>100000000</read_rows>  <!-- Limit to 100 million read rows -->
+                    <execution_time>3600</execution_time>  <!-- Max execution time of 3600 seconds (1 hour) -->
+                </interval>
+            </default>
+        </quotas>
+    </clickhouse>
+```
+
+
+### `3.Deploy the SuperSet & ClickHouse using Terraform Script`
 
 ### `main.tf`
 ```tf
@@ -317,10 +378,45 @@ kubectl create secret generic aws-secret \
 ### `3. Driver-Level Credentials with Node IAM Profiles`
 
 ```text
-To use an IAM instance profile, attach the policy to the instance profile IAM role and turn on access to instance metadata for the instance(s) on which the driver will run.
+To use an IAM [instance profile](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html), attach the policy to the instance profile IAM role and turn on access to [instance metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) for the instance(s) on which the driver will run.
 ```
 
-### `3. Create PV & PVC for Mounting to s3`
+### `4. Create a Bucket`
+
+```sh
+aws s3api create-bucket --bucket my-app-bucket-2024 --region us-east-1
+```
+
+### `5. Add the Bucket Policy`
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "MountpointFullBucketAccess",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:ListBucket",
+            "Resource": "arn:aws:s3:::s3-bucket-clickhouse-1"
+        },
+        {
+            "Sid": "MountpointFullObjectAccess",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:AbortMultipartUpload",
+                "s3:DeleteObject"
+            ],
+            "Resource": "arn:aws:s3:::s3-bucket-clickhouse-1/*"
+        }
+    ]
+}
+```
+
+### `6. Create PV & PVC for Mounting to s3`
 
 ```yaml
 ## PV & PVC Monuting to S3
@@ -366,7 +462,7 @@ spec:
 kubectl apply -f pv-s3.yaml
 ```
 
-### `4. Setup the Config-Map with S3 Hot & Cold Strategy`
+### `7. Setup the Config-Map with S3 Hot & Cold Strategy`
 
 ```yaml
 ## ConfigMap
@@ -493,7 +589,7 @@ kubectl apply -f config-s3.yaml
 ```
 
 
-### `5. Deploy the deployment`
+### `8. Deploy the deployment`
 
 ```yaml
 ## Deployment
@@ -557,7 +653,7 @@ kubectl apply -f deployment-s3.yaml
 ```
 
 
-### `6. SQL Queries`
+### `9. SQL Queries`
 
 ```sql
 -- Normal Local
@@ -608,5 +704,8 @@ FROM numbers(1e9);
 # Reference
 
 ```txt
-- Superset Helm Chart(https://github.com/apache/superset/releases/tag/superset-helm-chart-0.13.4)
+- [Superset Helm Chart](https://github.com/apache/superset/releases/tag/superset-helm-chart-0.13.4)
+- [Click House Installation](https://clickhouse.com/docs/en/install)
+- [AWS S3 Driver Helm Chart](https://github.com/awslabs/mountpoint-s3-csi-driver/releases/download/helm-chart-aws-mountpoint-s3-csi-driver-1.11.0/aws-mountpoint-s3-csi-driver-1.11.0.tgz)
+- [AWS Intergating with Clickhouse](https://clickhouse.com/docs/en/integrations/s3)
 ```
