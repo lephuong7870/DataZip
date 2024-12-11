@@ -113,3 +113,181 @@ example
  replicas: 3
 
 ```
+
+# Install Terraform
+
+### `For Linux (Ubuntu/Debian-based distributions):`
+```
+sudo apt update
+sudo apt install -y gnupg software-properties-common
+wget -qO- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+sudo apt-add-repository "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+sudo apt update
+sudo apt install terraform
+terraform --version
+```
+
+# Install helm
+
+### `For Linux (Ubuntu/Debian-based distributions):`
+
+```
+curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+sudo apt-get install apt-transport-https --yes
+echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+```
+
+# Deploy Superset & ClickHouse
+
+### `1.Clone the Github Repo`
+
+```
+git clone https://github.com/shashank3656/DataZip.git
+unzip Datazip  # For installing Unzip sudo apt install unzip
+cd Datazip/Terraform
+```
+
+### `2.Deploy the SuperSet & ClickHouse using Terraform Script`
+
+```
+## main.tf
+
+# Provider Name Kubernetes
+provider "kubernetes" {
+    config_path = var.kubeconfig_path
+}
+
+# Provider Name Helm
+provider "helm" {
+  kubernetes {
+    config_path = var.kubeconfig_path
+  }
+}
+
+# Namespace for ClickHouse
+resource "kubernetes_namespace" "clickhouse" {
+    metadata {
+        name = var.namespace_clickhouse
+    }
+}
+
+# Namespace for Superset
+resource "kubernetes_namespace" "superset" {
+    metadata {
+        name = var.namespace_superset
+    }
+}
+
+# ClickHouse PV File 
+resource "kubernetes_manifest" "clickhouse-pv" {
+    depends_on = [ kubernetes_namespace.clickhouse ]
+    manifest = yamldecode(file(var.pv_file_path))
+}
+
+# ClickHouse PVC File 
+resource "kubernetes_manifest" "clickhouse-pvc" {
+    depends_on = [ kubernetes_manifest.clickhouse-pv ]
+    manifest = yamldecode(file(var.pvc_file_path))
+}
+
+# ClickHouse ConfigMAP File 
+resource "kubernetes_manifest" "clickhouse-configmap" {
+    depends_on = [ kubernetes_manifest.clickhouse-pvc ]
+    manifest = yamldecode(file(var.config_file_path))
+}
+
+# ClickHouse Deployment File 
+resource "kubernetes_manifest" "clickhouse-deployment" {
+    depends_on = [ kubernetes_manifest.clickhouse-configmap ]
+    manifest = yamldecode(file(var.deploy_file_path))
+}
+
+# ClickHouse Service File 
+resource "kubernetes_manifest" "clickhouse-service" {
+    depends_on = [ kubernetes_manifest.clickhouse-deployment ]
+    manifest = yamldecode(file(var.service_file_path))
+}
+
+# SuperSet Using Helm
+# Helm release for Superset with custom values.yaml
+resource "helm_release" "superset" {
+    depends_on = [ var.namespace_superset ]
+    name       = var.superset_name
+    namespace  = var.namespace_superset
+    chart      = var.chart_path  # Path to local Helm chart
+    
+    values = [file(var.values_file)]  # Use your custom values.yaml file
+    # Optional: Wait for the release to be fully deployed before finishing
+    wait = true
+    
+    # Optional: Timeout for Helm install
+    timeout = 600  # in seconds
+}
+
+## Variables.tf
+variable "kubeconfig_path" {
+  description = "Path to the kubeconfig file"
+  type        = string
+}
+
+variable "namespace_clickhouse" {
+
+}
+
+variable "namespace_superset" {
+
+}
+
+variable "deploy_file_path" {
+
+}
+
+variable "service_file_path" {
+  
+}
+
+variable "pv_file_path" {
+  
+}
+
+variable "pvc_file_path" {
+  
+}
+
+variable "config_file_path" {
+  
+}
+
+variable "superset_name" {
+  
+}
+
+variable "chart_path" {
+  
+}
+
+variable "values_file" {
+  
+}
+
+## terraform.tfvars
+kubeconfig_path = "~/.kube/config"
+
+# clichouse
+namespace_clickhouse = "clickhouse"
+deploy_file_path = "~/clickhouse/deployment.yaml"
+service_file_path = "~/clickhouse/service.yaml"
+pv_file_path = "~/clickhouse/pv.yaml"
+pvc_file_path = "~/clickhouse/pvc.yaml"
+config_file_path = "~/clickhouse/configmap.yaml"
+
+# superset
+namespace_superset = "superset"
+superset_name = "superset"
+chart_path = "./superset-chart" 
+values_file = "./values.yaml"
+
+```
+
