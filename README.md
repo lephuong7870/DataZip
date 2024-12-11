@@ -151,9 +151,8 @@ cd Datazip/Terraform
 
 ### `2.Deploy the SuperSet & ClickHouse using Terraform Script`
 
-```
 ## main.tf
-
+```
 # Provider Name Kubernetes
 provider "kubernetes" {
     config_path = var.kubeconfig_path
@@ -225,8 +224,10 @@ resource "helm_release" "superset" {
     # Optional: Timeout for Helm install
     timeout = 600  # in seconds
 }
+```
 
-## Variables.tf
+### Variables.tf
+```
 variable "kubeconfig_path" {
   description = "Path to the kubeconfig file"
   type        = string
@@ -271,8 +272,10 @@ variable "chart_path" {
 variable "values_file" {
   
 }
+```
 
 ## terraform.tfvars
+```
 kubeconfig_path = "~/.kube/config"
 
 # clichouse
@@ -288,6 +291,10 @@ namespace_superset = "superset"
 superset_name = "superset"
 chart_path = "./superset-chart" 
 values_file = "./values.yaml"
-
 ```
+
+### ```Steps for Hot-Cold Strategy```
+
+#
+
 
