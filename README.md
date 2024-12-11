@@ -377,9 +377,9 @@ kubectl create secret generic aws-secret \
 
 ### `3. Driver-Level Credentials with Node IAM Profiles`
 
-```text
+
 To use an IAM [instance profile](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html), attach the policy to the instance profile IAM role and turn on access to [instance metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html) for the instance(s) on which the driver will run.
-```
+
 
 ### `4. Create a Bucket`
 
@@ -703,9 +703,7 @@ FROM numbers(1e9);
 
 # Reference
 
-```txt
 - [Superset Helm Chart](https://github.com/apache/superset/releases/tag/superset-helm-chart-0.13.4)
 - [Click House Installation](https://clickhouse.com/docs/en/install)
 - [AWS S3 Driver Helm Chart](https://github.com/awslabs/mountpoint-s3-csi-driver/releases/download/helm-chart-aws-mountpoint-s3-csi-driver-1.11.0/aws-mountpoint-s3-csi-driver-1.11.0.tgz)
 - [AWS Intergating with Clickhouse](https://clickhouse.com/docs/en/integrations/s3)
-```
