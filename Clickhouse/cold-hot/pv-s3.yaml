@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: clickhouse-s3-pv
+spec:
+  capacity:
+    storage: 10Gi  # The storage size for the S3-backed volume
+  accessModes:
+    - ReadWriteMany  # Allows multiple pods to read/write the volume
+  storageClassName: ""  # Required for static provisioning
+  claimRef:  # Ensures the PVC can only claim this PV
+    namespace: clickhouse  # The namespace where the PVC is defined
+    name: clickhouse-s3-pvc  # PVC name
+  mountOptions:
+    - allow-delete
+    - region=us-east-1  # S3 region, replace with your region
+  csi:
+    driver: s3.csi.aws.com  # S3 CSI Driver
+    volumeHandle: s3-csi-driver-volume  # Unique volume handle
+    volumeAttributes:
+      bucketName: s3-bucket-clickhouse-1  # Replace with your S3 bucket name
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clickhouse-s3-pvc
+  namespace: clickhouse  # The namespace where this PVC will be used
+spec:
+  accessModes:
+    - ReadWriteMany  # Allows multiple pods to access the volume
+  storageClassName: ""  # This is for static provisioning
+  resources:
+    requests:
+      storage: 10Gi  # Requested storage size
+  volumeName: clickhouse-s3-pv  # The PV that this PVC will claim

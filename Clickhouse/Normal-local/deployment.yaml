@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  namespace: clickhouse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+    spec:
+      volumes:
+        - name: clickhouse-userconfigmap
+          configMap:
+            name: clickhouse-userconfigmap
+        - name: clickhouse-storage
+          persistentVolumeClaim:
+            claimName: clickhouse
+        - name: clickhouse-s3
+          persistentVolumeClaim:
+            claimName: clickhouse-s3-pvc
+      containers:
+        - name: clickhouse
+          image: clickhouse/clickhouse-server:24.8.8.17
+          ports:
+            - containerPort: 8123
+            - containerPort: 9000
+          resources:
+            limits:
+              cpu: 600m
+              memory: 2Gi
+            requests:
+              cpu: 300m
+              memory: 1Gi
+          volumeMounts:
+            - name: clickhouse-userconfigmap
+              mountPath: /etc/clickhouse-server/users.xml
+              subPath: users.xml
+            - name: clickhouse-userconfigmap
+              mountPath: /etc/clickhouse-server/users.d/default.xml
+              subPath: access_management.xml
+            - name: clickhouse-userconfigmap
+              mountPath: /etc/clickhouse-server/config.d/default_config.xml
+              subPath: storage.xml
+            - name: clickhouse-storage
+              mountPath: /data
+            - name: clickhouse-s3
+              mountPath: /data
