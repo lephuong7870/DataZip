@@ -49,4 +49,4 @@ spec:
             - name: clickhouse-storage
               mountPath: /data
             - name: clickhouse-s3
-              mountPath: /data
+              mountPath: /data/cold
