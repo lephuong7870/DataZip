@@ -555,3 +555,51 @@ spec:
 ```sh
 kubectl apply -f deployment-s3.yaml
 ```
+
+
+### `6. SQL Queries`
+
+```sql
+-- Normal Local
+
+CREATE DATABASE dz_test;
+
+USE dz_test;
+
+CREATE TABLE dz_test
+(
+    B Int64,          -- A 64-bit integer column
+    T String,         -- A string (text) column
+    D Date            -- A date column
+) 
+ENGINE = MergeTree          -- Using the MergeTree engine for table storage
+PARTITION BY D              -- Partitioning the data by the 'D' (Date) column
+ORDER BY B                  -- Ordering data by the 'B' column for efficient query execution
+
+
+insert into dz_test select number, number, '2023-01-01' from numbers(1e4);
+select * from dz_test
+
+
+-- Hot & Cold Strategy 
+
+insert into dz_test select number, number, '2023-01-01' from numbers(1e9);
+
+CREATE DATABASE dz_test;
+
+USE dz_test;
+
+CREATE TABLE dz_test
+(
+    col1 UInt32,
+    col2 UInt32,
+    col3 Date
+)
+ENGINE = S3('https://s3.amazonaws.com/your-bucket-name/path/to/folder/', 'access-key-id', 'secret-access-key')
+FORMAT CSV;
+
+INSERT INTO dz_test
+SELECT number, number, '2023-01-01' 
+FROM numbers(1e9);
+
+```
