@@ -2,13 +2,13 @@
 
 # Perquisites
 
-```txt
+
 1) Any Cloud Account(Deploy the Minikube in the EC2 VMS)
 2) Terraform
 3) Helm
 4) Superset
 5) Clickhouse
-```
+
 
 # Install Kubernetes Using Script
 
