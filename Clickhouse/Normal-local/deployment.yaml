@@ -20,9 +20,6 @@ spec:
         - name: clickhouse-storage
           persistentVolumeClaim:
             claimName: clickhouse
-        - name: clickhouse-s3
-          persistentVolumeClaim:
-            claimName: clickhouse-s3-pvc
       containers:
         - name: clickhouse
           image: clickhouse/clickhouse-server:24.8.8.17
@@ -47,6 +44,4 @@ spec:
               mountPath: /etc/clickhouse-server/config.d/default_config.xml
               subPath: storage.xml
             - name: clickhouse-storage
-              mountPath: /data
-            - name: clickhouse-s3
               mountPath: /data
