@@ -830,11 +830,11 @@ postgresql:
       # storageClass: classname
       ##
       ## Access modes:
-      accessModes:
-        - ReadWriteOnce
+      #accessModes:
+      #  - ReadWriteOnce
     ## PostgreSQL port
     service:
-      type: NodePort
+      #type: NodePort
       ports:
         postgresql: "5432"
 
