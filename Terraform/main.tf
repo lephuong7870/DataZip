@@ -82,3 +82,27 @@ resource "helm_release" "superset" {
     # Optional: Timeout for Helm install
     timeout = 600  # in seconds
 }
+
+
+# External data source to retrieve service details
+data "external" "clickhouse_service_details" {
+  program = ["bash", "-c", <<EOT
+SERVICE_NAME=$(kubectl get svc -n clickhouse -o json | jq -r '.items[] | select(.metadata.name=="clickhouse-service")')
+NODE_PORT=$(echo "$SERVICE_NAME" | jq -r '.spec.ports[0].nodePort')
+NODE_IP=$(kubectl get nodes -o json | jq -r '.items[0].status.addresses[] | select(.type=="ExternalIP").address')
+echo "{\"node_port\": \"$NODE_PORT\", \"node_ip\": \"$NODE_IP\"}"
+EOT
+  ]
+}
+
+# External data source to fetch IP and port details
+data "external" "superset_service_details" {
+  depends_on = [helm_release.superset] # Ensure Helm release is installed first
+  program = ["bash", "-c", <<EOT
+SERVICE_NAME=$(kubectl get svc -n ${var.namespace_superset} -o json | jq -r '.items[] | select(.metadata.name=="${helm_release.superset.name}")')
+NODE_PORT=$(echo "$SERVICE_NAME" | jq -r '.spec.ports[0].nodePort')
+NODE_IP=$(kubectl get nodes -o json | jq -r '.items[0].status.addresses[] | select(.type=="ExternalIP").address')
+echo "{\"node_port\": \"$NODE_PORT\", \"node_ip\": \"$NODE_IP\"}"
+EOT
+  ]
+}
