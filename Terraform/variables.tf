@@ -35,6 +35,14 @@ variable "superset_name" {
   
 }
 
+variable "superset_pv_file_path" {
+  
+}
+
+variable "superset_pvc_file_path" {
+  
+}
+
 variable "chart_path" {
   
 }
