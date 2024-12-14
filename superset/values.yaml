@@ -53,6 +53,7 @@ serviceAccount:
 # @default -- see `values.yaml`
 bootstrapScript: |
   #!/bin/bash
+  pip3 install psycopg2-binary==2.9.1 clickhouse-connect --no-cache-dir  &&\
   if [ ! -f ~/bootstrap ]; then echo "Running Superset with uid {{ .Values.runAsUser }}" > ~/bootstrap; fi
 
 # -- The name of the secret which we will use to generate a superset_config.py file
@@ -142,7 +143,9 @@ extraVolumeMounts: []
 # -- A dictionary of overrides to append at the end of superset_config.py - the name does not matter
 # WARNING: the order is not guaranteed
 # Files can be passed as helm --set-file configOverrides.my-override=my-file.py
-configOverrides: {}
+configOverrides: 
+  secret: |
+    SECRET_KEY = 'ug8KKvIxp+xy2JHtXkcmqd38fDl3E6iMPoTWCSepAqJdoHadPik+NQDT'
   # extend_timeout: |
   #    # Extend timeout to allow long running queries.
   #    SUPERSET_WEBSERVER_TIMEOUT = ...
@@ -200,14 +203,14 @@ initImage:
   pullPolicy: IfNotPresent
 
 service:
-  type: ClusterIP
+  type: NodePort
   port: 8088
   annotations: {}
     # cloud.google.com/load-balancer-type: "Internal"
   loadBalancerIP: ~
   nodePort:
     # -- (int)
-    http: nil
+    http: 30080
 
 ingress:
   enabled: false
@@ -289,8 +292,7 @@ supersetNode:
       enabled: false
       ssl_cert_reqs: CERT_NONE
     # You need to change below configuration incase bringing own PostgresSQL instance and also set postgresql.enabled:false
-    #db_host: '{{ .Release.Name }}-postgresql'
-    db_host: "{{ .Release.Name }}-postgresql.{{ .Release.Namespace }}.svc.cluster.local"
+    db_host: '{{ .Release.Name }}-postgresql'
     db_port: "5432"
     db_user: superset
     db_pass: superset
@@ -827,10 +829,11 @@ postgresql:
       # storageClass: classname
       ##
       ## Access modes:
-      #accessModes:
-      #  - ReadWriteOnce
+      accessModes:
+        - ReadWriteOnce
     ## PostgreSQL port
     service:
+      type: NodePort
       ports:
         postgresql: "5432"
 
