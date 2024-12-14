@@ -289,7 +289,8 @@ supersetNode:
       enabled: false
       ssl_cert_reqs: CERT_NONE
     # You need to change below configuration incase bringing own PostgresSQL instance and also set postgresql.enabled:false
-    db_host: '{{ .Release.Name }}-postgresql'
+    #db_host: '{{ .Release.Name }}-postgresql'
+    db_host: "{{ .Release.Name }}-postgresql.{{ .Release.Namespace }}.svc.cluster.local"
     db_port: "5432"
     db_user: superset
     db_pass: superset
