@@ -54,10 +54,23 @@ resource "kubernetes_manifest" "clickhouse-service" {
     manifest = yamldecode(file(var.service_file_path))
 }
 
+# SuperSet PV File 
+resource "kubernetes_manifest" "superset-pv" {
+    depends_on = [ kubernetes_namespace.superset ]
+    manifest = yamldecode(file(var.superset_pv_file_path))
+}
+
+# SuperSet PVC File 
+resource "kubernetes_manifest" "superset-pvc" {
+    depends_on = [ kubernetes_manifest.superset-pv ]
+    manifest = yamldecode(file(var.superset_pvc_file_path))
+}
+
+
 # SuperSet Using Helm
 # Helm release for Superset with custom values.yaml
 resource "helm_release" "superset" {
-    depends_on = [ var.namespace_superset ]
+    depends_on = [ kubernetes_manifest.superset-pvc ]
     name       = var.superset_name
     namespace  = var.namespace_superset
     chart      = var.chart_path  # Path to local Helm chart
