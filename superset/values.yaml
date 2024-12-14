@@ -821,14 +821,14 @@ postgresql:
     persistence:
       ##
       ## Enable PostgreSQL persistence using Persistent Volume Claims.
-      enabled: true
+      enabled: false
       ##
       ## Persistent class
       # storageClass: classname
       ##
       ## Access modes:
-      accessModes:
-        - ReadWriteOnce
+      #accessModes:
+      #  - ReadWriteOnce
     ## PostgreSQL port
     service:
       ports:
