@@ -457,6 +457,56 @@ terraform apply
 ```
 ![Apply](images/Terraform/Terraform-Apply.png)
 
+
+### SetUp Clickhouse
+Use End URl of the ClickHouse 
+http://<IP>:<Port>/play
+```sql
+
+-- Show Databases
+SHOW databases;
+
+-- Create Database
+Create Database dz_test;
+
+-- Use the Database
+USE dz_test;
+
+-- Create a table with Storage Policy
+CREATE TABLE dz_test
+(
+    number UInt32,
+    number2 UInt32,
+    date Date
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(date)
+ORDER BY (date, number)
+SETTINGS storage_policy = 'hot_cold';
+
+-- Insert data using normal
+insert into dz_test select number, number, '2023-01-01' from numbers(1e4);
+
+-- Insert data using hot and cold
+insert into dz_test select number, number, '2023-01-01' from numbers(1e9);
+
+-- See the data
+select * from dz_test LIMIT=1000;
+```
+
+# Insert the Normal Data in the Normal PVC
+![Insert](images/Clickhouse/Normal.png)
+
+# Query the Normal Data
+![Normal-Data](images/Clickhouse/-data.png)
+
+# Insert the One billion Data in the Cold Hot PVC
+![Cold-Hot](images/Clickhouse/Cold-Hot-Insert.png)
+
+
+### SetUp Superset
+
+
 ### To Destroy the ClickHouse and Superset
 ```sh
 terraform destroy
