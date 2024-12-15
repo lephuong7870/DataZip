@@ -32,25 +32,25 @@ resource "kubernetes_manifest" "clickhouse-pv-cold" {
 
 # ClickHouse Hot PV File 
 resource "kubernetes_manifest" "clickhouse-pv-hot" {
-    depends_on = [ kubernetes_namespace.clickhouse ]
+    depends_on = [ kubernetes_manifest.clickhouse-pv-cold ]
     manifest = yamldecode(file(var.pv_hot_file_path))
 }
 
 # ClickHouse Cold PVC File 
 resource "kubernetes_manifest" "clickhouse-pvc-cold" {
-    depends_on = [ kubernetes_manifest.clickhouse-pv-cold ]
+    depends_on = [ kubernetes_manifest.clickhouse-pv-hot ]
     manifest = yamldecode(file(var.pvc_cold_file_path))
 }
 
 # ClickHouse Hot PVC File 
 resource "kubernetes_manifest" "clickhouse-pvc-hot" {
-    depends_on = [ kubernetes_manifest.clickhouse-pv-hot ]
+    depends_on = [ kubernetes_manifest.clickhouse-pvc-cold ]
     manifest = yamldecode(file(var.pvc_hot_file_path))
 }
 
 # ClickHouse ConfigMAP File 
 resource "kubernetes_manifest" "clickhouse-configmap" {
-    depends_on = [ kubernetes_manifest.clickhouse-pvc-cold ]
+    depends_on = [ kubernetes_manifest.clickhouse-pvc-hot ]
     manifest = yamldecode(file(var.config_file_path))
 }
 
