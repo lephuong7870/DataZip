@@ -3,7 +3,7 @@ kubeconfig_path = "~/.kube/config"
 # clichouse
 namespace_clickhouse = "clickhouse"
 deploy_file_path = "~/DataZip/Clickhouse/Normal-local/deployment.yaml"
-service_file_path = "~/DataZip/Clickhouse/service.yaml"
+service_file_path = "~/DataZip/Clickhouse/Normal-local/service.yaml"
 pv_file_path = "~/DataZip/Clickhouse/Normal-local/pv.yaml"
 pvc_file_path = "~/DataZip/Clickhouse/Normal-local/pvc.yaml"
 config_file_path = "~/DataZip/Clickhouse/Normal-local/configmap.yaml"
