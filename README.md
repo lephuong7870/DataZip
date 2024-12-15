@@ -447,7 +447,7 @@ output "superset_node_port" {
 }
 ```
 
-### Deploy Terraform Script using below CMD
+# Deploy Terraform Script using below CMD
 ```sh
 cd DataZip/Terraform
 terraform init
@@ -458,7 +458,7 @@ terraform apply
 ![Apply](images/Terraform/Terraform-Apply.png)
 
 
-### SetUp Clickhouse
+# SetUp Clickhouse
 Use End URl of the ClickHouse 
 http://<IP>:<Port>/play
 ```sql
@@ -504,10 +504,16 @@ select * from dz_test LIMIT=1000;
 ![Cold-Hot](images/Clickhouse/Cold-Hot-Insert.png)
 
 
-### SetUp Superset
+# SetUp Superset
+
+1) Use the Details Below
+   ```txt
+   username: admin
+   password: admin
+   ```
 
 
-### To Destroy the ClickHouse and Superset
+# To Destroy the ClickHouse and Superset
 ```sh
 terraform destroy
 ```
