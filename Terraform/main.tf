@@ -24,16 +24,28 @@ resource "kubernetes_namespace" "superset" {
     }
 }
 
-# ClickHouse PV File 
-resource "kubernetes_manifest" "clickhouse-pv" {
+# ClickHouse Cold PV File 
+resource "kubernetes_manifest" "clickhouse-pv-cold" {
     depends_on = [ kubernetes_namespace.clickhouse ]
-    manifest = yamldecode(file(var.pv_file_path))
+    manifest = yamldecode(file(var.pv_cold_file_path))
 }
 
-# ClickHouse PVC File 
-resource "kubernetes_manifest" "clickhouse-pvc" {
+# ClickHouse Hot PV File 
+resource "kubernetes_manifest" "clickhouse-pv-hot" {
+    depends_on = [ kubernetes_namespace.clickhouse ]
+    manifest = yamldecode(file(var.pv_hot_file_path))
+}
+
+# ClickHouse Cold PVC File 
+resource "kubernetes_manifest" "clickhouse-pvc-cold" {
     depends_on = [ kubernetes_manifest.clickhouse-pv ]
-    manifest = yamldecode(file(var.pvc_file_path))
+    manifest = yamldecode(file(var.pvc_cold_file_path))
+}
+
+# ClickHouse Hot PVC File 
+resource "kubernetes_manifest" "clickhouse-pvc-hot" {
+    depends_on = [ kubernetes_manifest.clickhouse-pv ]
+    manifest = yamldecode(file(var.pvc_hot_file_path))
 }
 
 # ClickHouse ConfigMAP File 
