@@ -546,5 +546,6 @@ terraform destroy
 
 - [Superset Helm Chart](https://github.com/apache/superset/releases/tag/superset-helm-chart-0.13.4)
 - [Click House Installation](https://clickhouse.com/docs/en/install)
+- [Click House Cold Hot Configuration](https://clickhouse.com/docs/en/engines/table-engines/mergetree-family/mergetree#table_engine-mergetree-multiple-volumes)
 - [AWS S3 Driver Helm Chart](https://github.com/awslabs/mountpoint-s3-csi-driver/releases/download/helm-chart-aws-mountpoint-s3-csi-driver-1.11.0/aws-mountpoint-s3-csi-driver-1.11.0.tgz)
 - [AWS Intergating with Clickhouse](https://clickhouse.com/docs/en/integrations/s3)
