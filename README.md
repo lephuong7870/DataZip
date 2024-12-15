@@ -455,13 +455,13 @@ terraform validate
 terraform plan
 terraform apply
 ```
-![screenshot](images/Terraform-Apply.png)
+![Apply](~/images/Terraform-Apply.png)
 
 ### To Destroy the ClickHouse and Superset
 ```sh
 terraform destroy
 ```
-![screenshot](images/Terraform-Destroy.png)
+![Destroy](~/images/Terraform-Destroy.png)
 
 
 
