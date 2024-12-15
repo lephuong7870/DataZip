@@ -1,5 +1,9 @@
 # Steps For Setting the SuperSet and Clichouse in Minikube
 
+### Clickhouse Hot-Cold Configuration in Persistent Volume
+
+### Clickhouse Hot-Cold Configuration in S3 (Cold-Hot-S3)[https://github.com/shashank3656/DataZip/tree/master/Clickhouse/cold-hot-s3/README.md]
+    
 # Perquisites
 
 
