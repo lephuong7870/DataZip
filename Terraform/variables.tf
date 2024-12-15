@@ -19,11 +19,19 @@ variable "service_file_path" {
   
 }
 
-variable "pv_file_path" {
+variable "pv_cold_file_path" {
   
 }
 
-variable "pvc_file_path" {
+variable "pv_hot_file_path" {
+  
+}
+
+variable "pvc_cold_file_path" {
+  
+}
+
+variable "pvc_hot_file_path" {
   
 }
 
