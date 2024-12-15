@@ -241,21 +241,33 @@ resource "kubernetes_namespace" "superset" {
     }
 }
 
-# ClickHouse PV File 
-resource "kubernetes_manifest" "clickhouse-pv" {
+# ClickHouse Cold PV File 
+resource "kubernetes_manifest" "clickhouse-pv-cold" {
     depends_on = [ kubernetes_namespace.clickhouse ]
-    manifest = yamldecode(file(var.pv_file_path))
+    manifest = yamldecode(file(var.pv_cold_file_path))
 }
 
-# ClickHouse PVC File 
-resource "kubernetes_manifest" "clickhouse-pvc" {
-    depends_on = [ kubernetes_manifest.clickhouse-pv ]
-    manifest = yamldecode(file(var.pvc_file_path))
+# ClickHouse Hot PV File 
+resource "kubernetes_manifest" "clickhouse-pv-hot" {
+    depends_on = [ kubernetes_manifest.clickhouse-pv-cold ]
+    manifest = yamldecode(file(var.pv_hot_file_path))
+}
+
+# ClickHouse Cold PVC File 
+resource "kubernetes_manifest" "clickhouse-pvc-cold" {
+    depends_on = [ kubernetes_manifest.clickhouse-pv-hot ]
+    manifest = yamldecode(file(var.pvc_cold_file_path))
+}
+
+# ClickHouse Hot PVC File 
+resource "kubernetes_manifest" "clickhouse-pvc-hot" {
+    depends_on = [ kubernetes_manifest.clickhouse-pvc-cold ]
+    manifest = yamldecode(file(var.pvc_hot_file_path))
 }
 
 # ClickHouse ConfigMAP File 
 resource "kubernetes_manifest" "clickhouse-configmap" {
-    depends_on = [ kubernetes_manifest.clickhouse-pvc ]
+    depends_on = [ kubernetes_manifest.clickhouse-pvc-hot ]
     manifest = yamldecode(file(var.config_file_path))
 }
 
@@ -271,10 +283,23 @@ resource "kubernetes_manifest" "clickhouse-service" {
     manifest = yamldecode(file(var.service_file_path))
 }
 
+# SuperSet PV File 
+resource "kubernetes_manifest" "superset-pv" {
+    depends_on = [ kubernetes_namespace.superset ]
+    manifest = yamldecode(file(var.superset_pv_file_path))
+}
+
+# SuperSet PVC File 
+resource "kubernetes_manifest" "superset-pvc" {
+    depends_on = [ kubernetes_manifest.superset-pv ]
+    manifest = yamldecode(file(var.superset_pvc_file_path))
+}
+
+
 # SuperSet Using Helm
 # Helm release for Superset with custom values.yaml
 resource "helm_release" "superset" {
-    depends_on = [ var.namespace_superset ]
+    depends_on = [ kubernetes_manifest.superset-pvc ]
     name       = var.superset_name
     namespace  = var.namespace_superset
     chart      = var.chart_path  # Path to local Helm chart
@@ -285,6 +310,30 @@ resource "helm_release" "superset" {
     
     # Optional: Timeout for Helm install
     timeout = 600  # in seconds
+}
+
+
+# External data source to retrieve service details
+data "external" "clickhouse_service_details" {
+  program = ["bash", "-c", <<EOT
+SERVICE_NAME=$(kubectl get svc -n clickhouse -o json | jq -r '.items[] | select(.metadata.name=="clickhouse-service")')
+NODE_PORT=$(echo "$SERVICE_NAME" | jq -r '.spec.ports[0].nodePort')
+NODE_IP=$(kubectl get nodes -o json | jq -r '.items[0].status.addresses[] | select(.type=="ExternalIP").address')
+echo "{\"node_port\": \"$NODE_PORT\", \"node_ip\": \"$NODE_IP\"}"
+EOT
+  ]
+}
+
+# External data source to fetch IP and port details
+data "external" "superset_service_details" {
+  depends_on = [helm_release.superset] # Ensure Helm release is installed first
+  program = ["bash", "-c", <<EOT
+SERVICE_NAME=$(kubectl get svc -n ${var.namespace_superset} -o json | jq -r '.items[] | select(.metadata.name=="${helm_release.superset.name}")')
+NODE_PORT=$(echo "$SERVICE_NAME" | jq -r '.spec.ports[0].nodePort')
+NODE_IP=$(kubectl get nodes -o json | jq -r '.items[0].status.addresses[] | select(.type=="ExternalIP").address')
+echo "{\"node_port\": \"$NODE_PORT\", \"node_ip\": \"$NODE_IP\"}"
+EOT
+  ]
 }
 ```
 
@@ -311,11 +360,19 @@ variable "service_file_path" {
   
 }
 
-variable "pv_file_path" {
+variable "pv_cold_file_path" {
   
 }
 
-variable "pvc_file_path" {
+variable "pv_hot_file_path" {
+  
+}
+
+variable "pvc_cold_file_path" {
+  
+}
+
+variable "pvc_hot_file_path" {
   
 }
 
@@ -324,6 +381,14 @@ variable "config_file_path" {
 }
 
 variable "superset_name" {
+  
+}
+
+variable "superset_pv_file_path" {
+  
+}
+
+variable "superset_pvc_file_path" {
   
 }
 
@@ -342,17 +407,60 @@ kubeconfig_path = "~/.kube/config"
 
 # clichouse
 namespace_clickhouse = "clickhouse"
-deploy_file_path = "~/clickhouse/deployment.yaml"
-service_file_path = "~/clickhouse/service.yaml"
-pv_file_path = "~/clickhouse/pv.yaml"
-pvc_file_path = "~/clickhouse/pvc.yaml"
-config_file_path = "~/clickhouse/configmap.yaml"
+deploy_file_path = "~/DataZip/Clickhouse/cold-hot-local/deployment.yaml"
+service_file_path = "~/DataZip/Clickhouse/cold-hot-local/service.yaml"
+pv_cold_file_path = "~/DataZip/Clickhouse/cold-hot-local/pv-cold.yaml"
+pv_hot_file_path = "~/DataZip/Clickhouse/cold-hot-local/pv-hot.yaml"
+pvc_cold_file_path = "~/DataZip/Clickhouse/cold-hot-local/pvc-cold.yaml"
+pvc_hot_file_path = "~/DataZip/Clickhouse/cold-hot-local/pvc-hot.yaml"
+config_file_path = "~/DataZip/Clickhouse/cold-hot-local/configmap.yaml"
 
 # superset
 namespace_superset = "superset"
 superset_name = "superset"
-chart_path = "./superset-chart" 
-values_file = "./values.yaml"
+superset_pv_file_path = "~/DataZip/superset/pv.yaml"
+superset_pvc_file_path = "~/DataZip/superset/pvc.yaml"
+chart_path = "~/DataZip/superset/." 
+values_file = "~/DataZip/superset/values.yaml"
+```
+
+### `Outputs.tf`
+
+```tf
+#  Output the Clickhouse Ip and Port
+output "clickhouse_node_port" {
+  value = data.external.clickhouse_service_details.result.node_port
+}
+
+output "clickhouse_node_ip" {
+  value = data.external.clickhouse_service_details.result.node_ip
+}
+
+
+#  Output the SuperSet service details
+output "superset_node_ip" {
+  value = data.external.superset_service_details.result.node_ip
+}
+
+output "superset_node_port" {
+  value = data.external.superset_service_details.result.node_port
+}
+```
+
+### Deploy Terraform Script using below CMD
+```sh
+cd DataZip/Terraform
+terraform init
+terraform validate
+terraform plan
+terraform apply
+![screenshot](images/Terraform-Apply.png)
+```
+
+### To Destroy the ClickHouse and Superset
+```sh
+terraform destroy
+![screenshot](images/Terraform-Destroy.png)
 ```
 
 
