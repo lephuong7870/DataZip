@@ -506,11 +506,27 @@ select * from dz_test LIMIT=1000;
 
 # SetUp Superset
 
-1) Use the Details Below
+1) Use the Login Details Below for Superset
    ```txt
    username: admin
    password: admin
    ```
+
+2) Click Connect Database
+
+3) Select ClickConnect Database
+   ```txt
+   ClickHouse Host:
+   ClickHouse Port:
+   ClickHouse Database:
+   Clickhouse Password:
+   ``` 
+   ![Connect-1](images/Superset/Connect-1.png)
+
+   ![Connect-2](images/Superset/Connect-2.png)
+
+4) Query the ClickHouse data using SQLABS
+   ![Superset](images/Superset/Query.png)
 
 
 # To Destroy the ClickHouse and Superset
