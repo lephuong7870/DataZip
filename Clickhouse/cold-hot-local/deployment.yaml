@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  namespace: clickhouse
+spec:
+  serviceName: clickhouse
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+    spec:
+      securityContext:
+        fsGroup: 1000  # Ensure that ClickHouse can write to directories
+      initContainers:
+      - name: fix-permissions
+        image: busybox
+        command:
+          - sh
+          - -c
+          - "chown -R 1001:1001 /mnt/data/clickhouse/data-hot && chmod -R 755 /mnt/data/clickhouse/data-hot && chown -R 1001:1001 /mnt/data/clickhouse/data-cold && chmod -R 755 /mnt/data/clickhouse/data-cold"
+        volumeMounts:
+          - mountPath: /mnt/data/clickhouse/data-hot
+            name: data-hot
+          - mountPath: /mnt/data/clickhouse/data-cold
+            name: data-cold
+      containers:
+      - name: clickhouse
+        image: clickhouse/clickhouse-server:24.8.8.17
+        ports:
+        - containerPort: 9000
+          name: http
+        - containerPort: 8123
+          name: native
+        volumeMounts:
+        - name: data-hot
+          mountPath: /data/clickhouse/data-hot
+        - name: data-cold
+          mountPath: /data/clickhouse/data-cold
+        - name: config-storage
+          mountPath: /etc/clickhouse-server/config.d/storage.xml
+          subPath: storage.xml
+        - name: config-users
+          mountPath: /etc/clickhouse-server/users.d/users.xml
+          subPath: users.xml
+        - name: config-access
+          mountPath: /etc/clickhouse-server/access_management.xml
+          subPath: access_management.xml
+      volumes:
+      - name: data-hot
+        persistentVolumeClaim:
+          claimName: pvc-hot
+      - name: data-cold
+        persistentVolumeClaim:
+          claimName: pvc-cold
+      - name: config-storage
+        configMap:
+          name: clickhouse-storage-config
+      - name: config-users
+        configMap:
+          name: clickhouse-storage-config
+      - name: config-access
+        configMap:
+          name: clickhouse-storage-config

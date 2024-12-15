@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-storage-config
+  namespace: clickhouse
+data:
+  storage.xml: |
+    <clickhouse>
+      <storage_configuration>
+        <disks>
+          <hot>
+            <path>/data/clickhouse/data-hot/</path>
+          </hot>
+          <cold>
+            <path>/data/clickhouse/data-cold/</path>
+          </cold>
+        </disks>
+        <policies>
+          <hot_cold>
+            <volumes>
+              <hot>
+                <disk>hot</disk>
+              </hot>
+              <cold>
+                <disk>cold</disk>
+              </cold>
+            </volumes>
+            <move_factor>0.2</move_factor>
+          </hot_cold>
+        </policies>
+      </storage_configuration>
+      <listen_host>0.0.0.0</listen_host>
+    </clickhouse>
+
+  users.xml: |
+    <?xml version="1.0"?>
+    <clickhouse>
+      <users>
+        <default>
+          <profile>default</profile>
+          <password>admin</password>
+          <quota>default</quota>
+          <networks>
+            <ip>::/0</ip>
+          </networks>
+        </default>
+      </users>
+      <quotas>
+            <default>
+                <interval>
+                    <duration>3600</duration>  <!-- 1 hour interval -->
+                    <queries>1000</queries>  <!-- Allow 1000 queries per interval -->
+                    <errors>20</errors>  <!-- Allow 10 errors per interval -->
+                    <result_rows>10000000</result_rows>  <!-- Limit to 10 million result rows -->
+                    <read_rows>100000000</read_rows>  <!-- Limit to 100 million read rows -->
+                    <execution_time>3600</execution_time>  <!-- Max execution time of 3600 seconds (1 hour) -->
+                </interval>
+            </default>
+        </quotas>
+    </clickhouse>
+
+  access_management.xml: |
+    <clickhouse>
+      <access_control>
+        <allow_empty_access_control>true</allow_empty_access_control>
+        <access_management>1</access_management>
+        <named_collection_control>1</named_collection_control>
+        <show_named_collections>1</show_named_collections>
+      </access_control>
+    </clickhouse>
+
